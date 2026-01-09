@@ -1,25 +1,34 @@
-
 package app.store;
-
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 import app.model.Student;
 import com.google.gson.Gson;
 
 public class RedisStore {
-    static Jedis jedis;
+    static JedisPool pool;
     static Gson gson = new Gson();
-
+    
     public static void init() {
-        jedis = new Jedis("localhost", 6379); // IP ve PORT burada
-        for (int i = 0; i < 10000; i++) {
-            String id = "2025" + String.format("%06d", i);
-            Student s = new Student(id, "Ad Soyad " + i, "Bilgisayar");
-            jedis.set(id, gson.toJson(s));
+        pool = new JedisPool("localhost", 6379);
+        
+        try (Jedis jedis = pool.getResource()) {
+            for (int i = 0; i < 10000; i++) {
+                String id = "2025" + String.format("%06d", i);
+                Student s = new Student(id, "Ad Soyad " + i, "Bilgisayar");
+                jedis.set(id, gson.toJson(s));
+            }
         }
+        System.out.println("Redis'e 10000 öğrenci eklendi!");
     }
-
+    
     public static Student get(String id) {
-        String json = jedis.get(id);
-        return gson.fromJson(json, Student.class);
+        try (Jedis jedis = pool.getResource()) {
+            String json = jedis.get(id);
+            if (json == null) {
+                return null;
+            }
+            return gson.fromJson(json, Student.class);
+        }
     }
 }
