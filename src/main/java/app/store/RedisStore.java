@@ -19,7 +19,6 @@ public class RedisStore {
                 jedis.set(id, gson.toJson(s));
             }
         }
-        System.out.println("Redis'e 10000 öğrenci eklendi!");
     }
     
     public static Student get(String id) {
